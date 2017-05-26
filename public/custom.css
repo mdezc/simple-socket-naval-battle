@@ -1,0 +1,41 @@
+html , body {
+    background: #212121;
+    color: #fff;
+    font-family: Helvetica;
+    margin: 0;
+    padding: 0;
+}
+
+tr > td {
+    height:50px !important;
+    max-height:50px !important;
+    width:50px !important;
+    max-width:50px !important;
+    color: grey;
+    border: 1px white solid;
+}
+
+table > tbody > tr > td.unknown:hover {
+    background:grey;
+    cursor: pointer;
+}
+
+body {
+    height:100vh;
+    margin:auto;
+}
+
+.water {
+    background: cornflowerblue;
+    color: transparent;
+}
+
+.boat {
+    background: orange;
+    color: transparent;
+}
+
+.unknown {
+    background: lightgray;
+    color: transparent;
+}

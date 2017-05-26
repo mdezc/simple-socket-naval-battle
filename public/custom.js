@@ -4,15 +4,28 @@ $(document).ready(function() {
 
     var esMiTurno = true;
 
+
+    var loading = function() {
+        // add the overlay with loading image to the page
+        var over = '<div id="overlay">' +
+            '<img id="loading" src="loader.gif">' +
+            '</div>';
+        $(over).appendTo('body');
+    }
+
+
     $(' td ').click(function () {
         if (esMiTurno) {
             socket.emit('shoot', $(this).attr('id'));
             console.log("disparando a: " + $(this).attr('id'));
              esMiTurno = !esMiTurno;
+             loading();
         }
     });
 
     $(function () {
+
+        
 
         socket.on('redirect', function(destination) {
             window.location.href = destination;
@@ -49,9 +62,11 @@ $(document).ready(function() {
             console.log('me dispararon a: '+ id);
             $( '#x' + id ).addClass('boat');
             esMiTurno = true;
+            $('#overlay').remove();
         });
 
     });
+
 
 });
 

@@ -15,7 +15,9 @@ var player2fichas;
 var player1 = {};
 var player2 = {};
 
-var jugadores
+var bothPlayers = {};
+
+var jugadores;
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
@@ -34,7 +36,6 @@ io.on('connection', function (socket) {
     console.log('jugadores ' + jugadores);
 
     if (jugadores === 1) {
-        socket.ready = false;
         socket.fichas = 0;
         player1 = socket;
         gameOver();
@@ -42,7 +43,6 @@ io.on('connection', function (socket) {
 
     if (jugadores === 2) {
         socket.fichas = 0;
-        socket.ready = false;
         player2 = socket;
         prepareGame();
 
@@ -65,7 +65,7 @@ io.on('connection', function (socket) {
             player1board[id] = {class:"boat", revealed:false};
             socket.emit('boat', '#' + id);
         } else {
-            socket.ready = true;
+            bothPlayers[socket.id].ready = true;
             checkBothPlayerStatus();
         }
     });

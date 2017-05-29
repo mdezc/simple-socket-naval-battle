@@ -3,7 +3,8 @@ $(document).ready(function() {
     var socket = io();
 
     var esMiTurno = true;
-
+    var ponerFichas = true;
+    var fichasPuestas = 0;
 
     var loading = function() {
         // add the overlay with loading image to the page
@@ -13,9 +14,17 @@ $(document).ready(function() {
         $(over).appendTo('body');
     }
 
+    $('#jugador > table > tbody > tr > td ').click(function () {
+        if (ponerFichas && esMiTurno) {
+            
+            socket.emit('boat', $(this).attr('id'));
+            console.log("populando: " + $(this).attr('id'));
+        }
+    });
 
-    $(' td ').click(function () {
-        if (esMiTurno) {
+
+    $('#rival > table > tbody > tr > td ').click(function () {
+        if (esMiTurno && !ponerFichas) {
             socket.emit('shoot', $(this).attr('id'));
             console.log("disparando a: " + $(this).attr('id'));
              esMiTurno = !esMiTurno;
@@ -25,16 +34,8 @@ $(document).ready(function() {
 
     $(function () {
 
-        
-
-        socket.on('redirect', function(destination) {
-            window.location.href = destination;
-        });
-
-        //gameModes
-
         socket.on('water', function(id) {
-            $( id ).addClass('water');
+            $( id ).addClass('ownwater');
             $( id ).removeClass('default');
         });
 
@@ -43,26 +44,34 @@ $(document).ready(function() {
             $( id ).removeClass('default');
         });
 
+        socket.on('default', function(id) {
+            $( id ).addClass('default');
+        });
+
         socket.on('unknown', function(id) {
             $( id ).addClass('unknown');
             $( id ).removeClass('default');
         });
 
         socket.on('ready', function() {
-            $('#alone').hide();
-            $('#enemigo').show();
+            $('#esperando').hide();
+            $('#partido').show();
         });
 
         socket.on('over', function() {
-            $('#alone').show();
-            $('#enemigo').hide();
+            $('#partido').hide();
+            $('#esperando').show();
         });
 
         socket.on('shoot', function(id) {
             console.log('me dispararon a: '+ id);
-            $( '#x' + id ).addClass('boat');
+            $( '#_' + id ).addClass('boat');
             esMiTurno = true;
             $('#overlay').remove();
+        });
+
+        socket.on('endPrepare', function () {
+            ponerFichas = false;
         });
 
     });

@@ -6,8 +6,16 @@ var serveStatic = require('serve-static');
 
 app.use(serveStatic('public/'));
 
-var player1;
-var player2;
+var player1board;
+var player2board;
+
+var player1fichas;
+var player2fichas;
+
+var player1 = {};
+var player2 = {};
+
+var jugadores
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
@@ -20,20 +28,22 @@ app.get('/busy', function (req, res) {
 
 io.on('connection', function (socket) {
     socket.join('partido');
-
     console.log('user connected');
 
     var jugadores = io.sockets.adapter.rooms['partido'].length;
     console.log('jugadores ' + jugadores);
 
     if (jugadores === 1) {
+        socket.ready = false;
+        socket.fichas = 0;
         player1 = socket;
         gameOver();
     }
 
     if (jugadores === 2) {
+        socket.fichas = 0;
+        socket.ready = false;
         player2 = socket;
-
         prepareGame();
 
     }
@@ -42,13 +52,22 @@ io.on('connection', function (socket) {
     console.log("player 2: " + player2);
 
     socket.on('disconnect', function () {
-        console.log('user disconnected');
-        player1 = undefined;
-        player2 = undefined;
+        if (io.sockets.adapter.rooms['partido'] != null && io.sockets.adapter.rooms['partido'].length < 2) {
+            player1 = undefined;
+            player2 = undefined;
+            gameOver();
+        }
     });
 
     socket.on('boat', function (id) {
-        io.emit('boat', '#' + id);
+        if (socket.fichas < 10) {
+            socket.fichas++;
+            player1board[id] = {class:"boat", revealed:false};
+            socket.emit('boat', '#' + id);
+        } else {
+            socket.ready = true;
+            checkBothPlayerStatus();
+        }
     });
 
     socket.on('shoot', function (id) {
@@ -69,22 +88,53 @@ http.listen(3000, function () {
     console.log('listening on *:3000');
 });
 
+function checkBothPlayerStatus() {
+   console.log('check both player status: ' + player1.ready && player2.ready);
+   return player1.ready && player2.ready;
+}
+
 function gameOver() {
     io.emit('over');
 }
 
 function prepareGame() {
-    fillBoats();
+    player1board = new Matriz;
+    player2board = new Matriz;
+    initBoard(player1board);
+    initBoard(player2board);
     io.emit('ready');
 }
 
-function fillBoats() {
-    var alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+function initBoard(board) {
+    for (property in  board) {
+        io.emit('water', '#_' + property);
+        io.emit('default', '#'+ property);
+    }   
+}
+
+function hideRivalBoard() {
+    for (property in new Matriz()) {
+        io.emit('unknown', '#' + property);
+    }
+}
+
+function Tile() {
+    this.class = "water";
+    this.revealed = false;
+}
+
+function Matriz() {
+    var matriz = {};
+    var alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
     for (var x = 0; x < alphabet.length ; x++) {
-        for (var y = 0; y < 11; y++) {
-            var id = alphabet[x] + y;
-            io.emit('water', '#x' + id);
-            io.emit('unknown', '#'+id);
+        for (var y = 1; y < 11; y++) {
+            this[(alphabet[x] + y).toString()] = new Tile();
         }
     }
+}
+
+function otherPlayer(socket) {
+    if (player1 === socket ) { return player2 }
+    if (player2 === socket ) { return player1 }
+    return null;
 }

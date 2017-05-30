@@ -12,8 +12,8 @@ var player2board;
 var player1fichas;
 var player2fichas;
 
-var player1 = {};
-var player2 = {};
+var player1 = { id : null, ready:null};
+var player2 = { id : null, ready:null};
 
 var bothPlayers = {};
 
@@ -37,24 +37,24 @@ io.on('connection', function (socket) {
 
     if (jugadores === 1) {
         socket.fichas = 0;
-        player1 = socket;
+        player1.id = socket.id;
         gameOver();
     }
 
     if (jugadores === 2) {
         socket.fichas = 0;
-        player2 = socket;
+        player2.id = socket.id;
         prepareGame();
 
     }
 
-    console.log("player 1: " + player1);
-    console.log("player 2: " + player2);
+    console.log("player 1: " + player1.id);
+    console.log("player 2: " + player2.id);
 
     socket.on('disconnect', function () {
         if (io.sockets.adapter.rooms['partido'] != null && io.sockets.adapter.rooms['partido'].length < 2) {
-            player1 = undefined;
-            player2 = undefined;
+            player1 = {};
+            player2 = {};
             gameOver();
         }
     });
@@ -65,8 +65,12 @@ io.on('connection', function (socket) {
             player1board[id] = {class:"boat", revealed:false};
             socket.emit('boat', '#' + id);
         } else {
-            bothPlayers[socket.id].ready = true;
-            checkBothPlayerStatus();
+            console.log('p1: ' + player1.id);
+            console.log('p2: ' + player2.id);
+            bothPlayers[socket.id] = {ready:true};
+            if (checkBothPlayerStatus()) {
+                io.emit('endPrepare');
+            }
         }
     });
 
@@ -89,8 +93,19 @@ http.listen(3000, function () {
 });
 
 function checkBothPlayerStatus() {
-   console.log('check both player status: ' + player1.ready && player2.ready);
-   return player1.ready && player2.ready;
+    for (var i = 0; i < bothPlayers.length; i++) {
+        if ( checkBothPlayerStatus[player1.id]) {
+            
+        }
+    }
+
+   if (typeof checkBothPlayerStatus[player1.id] === 'undefined' || typeof checkBothPlayerStatus[player1.id] === 'undefined') {
+        console.log('check both player status: one not ready');
+        return false;
+   } else {
+    console.log('check both player status: both ready');
+   return checkBothPlayerStatus[player1.id].ready && checkBothPlayerStatus[player2.id].ready;
+   }
 }
 
 function gameOver() {
@@ -137,4 +152,15 @@ function otherPlayer(socket) {
     if (player1 === socket ) { return player2 }
     if (player2 === socket ) { return player1 }
     return null;
+}
+
+function removeA(arr) {
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        what = a[--L];
+        while ((ax= arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
+        }
+    }
+    return arr;
 }

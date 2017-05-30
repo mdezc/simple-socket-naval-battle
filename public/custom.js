@@ -3,7 +3,7 @@ $(document).ready(function() {
     var socket = io();
 
     var esMiTurno = true;
-    var ponerFichas = true;
+    var ponerFichas = false;
     var fichasPuestas = 0;
 
     var loading = function() {

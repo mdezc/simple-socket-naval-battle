@@ -1,0 +1,24 @@
+flujo
+-----
+
+- player joins
+
+* server 
+	- agregar array players
+
+- player joins
+
+* server
+	- agregar array players
+
+	- if length players == 2, prepare game
+	- enviar board en blanco a cada uno
+
+* client
+	- poner fichas
+	- avisar al server
+
+
+si cada uno tiene 2 boards (que revelé y qué tengo)
+
+cuando disparo se compara el rival con el mio 

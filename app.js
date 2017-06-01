@@ -6,42 +6,29 @@ var serveStatic = require('serve-static');
 
 app.use(serveStatic('public/'));
 
-var player1board;
-var player2board;
-
-var player1fichas;
-var player2fichas;
-
-var player1 = { id : null, ready:null};
-var player2 = { id : null, ready:null};
-
-var bothPlayers = {};
-
-var jugadores;
+var jugadores = [];
+var cantidadDeJugadores;
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/busy', function (req, res) {
-    res.sendFile(__dirname + '/busy.html');
-});
-
-
 io.on('connection', function (socket) {
-    socket.join('partido');
-    console.log('user connected');
 
-    var jugadores = io.sockets.adapter.rooms['partido'].length;
-    console.log('jugadores ' + jugadores);
+    console.log('User connected');
 
-    if (jugadores === 1) {
-        socket.fichas = 0;
-        player1.id = socket.id;
+    if (jugadores.length < 2) {
+        console.log('Agregando jugador al partido: ' + socket.id);
+        socket.join('partido');
+        cantidadDeJugadores = io.sockets.adapter.rooms['partido'].length;
+        console.log('Jugadores en partido: ' + cantidadDeJugadores);
+        var jugador = new Jugador();
+        jugador.id = socket.id;
+        jugadores.push(jugador);
         gameOver();
     }
 
-    if (jugadores === 2) {
+    if (jugadores.length === 2) {
         socket.fichas = 0;
         player2.id = socket.id;
         prepareGame();
@@ -52,9 +39,8 @@ io.on('connection', function (socket) {
     console.log("player 2: " + player2.id);
 
     socket.on('disconnect', function () {
-        if (io.sockets.adapter.rooms['partido'] != null && io.sockets.adapter.rooms['partido'].length < 2) {
-            player1 = {};
-            player2 = {};
+        if (io.sockets.adapter.rooms['partido'] !== null && io.sockets.adapter.rooms['partido'].length < 2) {
+            jugadores = [];
             gameOver();
         }
     });
@@ -120,10 +106,10 @@ function prepareGame() {
     io.emit('ready');
 }
 
-function initBoard(board) {
+function readBoard(board) {
     for (property in  board) {
-        io.emit('water', '#_' + property);
-        io.emit('default', '#'+ property);
+        socket.send('water', '#_' + property);
+        socket.send('default', '#'+ property);
     }   
 }
 
@@ -148,11 +134,14 @@ function Matriz() {
     }
 }
 
-function otherPlayer(socket) {
-    if (player1 === socket ) { return player2 }
-    if (player2 === socket ) { return player1 }
-    return null;
+function Jugador() {
+    this.id = null;
+    this.ready = null;
+    this.fichas = 0;
+    this.ownBoard = new Matriz();
+    this.rivalBoard = new Matriz();
 }
+
 
 function removeA(arr) {
     var what, a = arguments, L = a.length, ax;

@@ -2,9 +2,17 @@ $(document).ready(function() {
 
     var socket = io();
 
-    var esMiTurno = true;
-    var ponerFichas = false;
-    var fichasPuestas = 0;
+    var esMiTurno;
+    var ponerFichas;
+    var fichasPuestas;
+
+    var init = function() {
+        esMiTurno = null;
+        ponerFichas = false;
+        fichasPuestas = 0;
+    };
+
+    init();
 
     var loading = function() {
         // add the overlay with loading image to the page
@@ -12,7 +20,7 @@ $(document).ready(function() {
             '<img id="loading" src="loader.gif">' +
             '</div>';
         $(over).appendTo('body');
-    }
+    };
 
     $('#jugador > table > tbody > tr > td ').click(function () {
         if (ponerFichas && esMiTurno) {
@@ -53,12 +61,17 @@ $(document).ready(function() {
             $( id ).removeClass('default');
         });
 
-        socket.on('ready', function() {
+        socket.on('populate', function() {
             $('#esperando').hide();
             $('#partido').show();
         });
 
+        socket.on('ready', function() {
+            $('#rival').show();
+        });
+
         socket.on('over', function() {
+            init();
             $('#partido').hide();
             $('#esperando').show();
         });

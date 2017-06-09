@@ -13,10 +13,13 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
+
+//INIT
 io.on('connection', function (socket) {
 
     console.log('User connected');
 
+    //PLAYER1
     if (jugadores.length < 2) {
         console.log('Agregando jugador al partido: ' + socket.id);
         socket.join('partido');
@@ -28,18 +31,20 @@ io.on('connection', function (socket) {
         gameOver();
     }
 
+    //PLAYER2
     if (jugadores.length === 2) {
         socket.fichas = 0;
-        player2.id = socket.id;
+        jugador.id = socket.id;
+        jugadores.push(jugador);
         prepareGame();
-
     }
 
-    console.log("player 1: " + player1.id);
-    console.log("player 2: " + player2.id);
+    console.log("player 1: " + jugadores[0]);
+    console.log("player 2: " + jugadores[1]);
 
+    //DISCONNECT
     socket.on('disconnect', function () {
-        if (io.sockets.adapter.rooms['partido'] !== null && io.sockets.adapter.rooms['partido'].length < 2) {
+        if (typeof io.sockets.adapter.rooms['partido'] !== 'undefined' && io.sockets.adapter.rooms['partido'].length < 2) {
             jugadores = [];
             gameOver();
         }
@@ -79,9 +84,8 @@ http.listen(3000, function () {
 });
 
 function checkBothPlayerStatus() {
-    for (var i = 0; i < bothPlayers.length; i++) {
-        if ( checkBothPlayerStatus[player1.id]) {
-            
+    for (var i = 0; i < jugadores.length; i++) {
+        if ( checkBothPlayerStatus[jugadores[i].id]) {
         }
     }
 
@@ -98,12 +102,21 @@ function gameOver() {
     io.emit('over');
 }
 
+function Tile(xy) {
+    this.class = "water";
+    this.revealed = false;
+    this.coords = xy;
+}
+
 function prepareGame() {
-    player1board = new Matriz;
-    player2board = new Matriz;
-    initBoard(player1board);
-    initBoard(player2board);
-    io.emit('ready');
+    for (var jugador in jugadores) {
+        jugador = new Jugador();
+        for (tile in jugador.ownBoard) {
+            socket.to(jugador.id).emit(Tile[property], Tile.);
+        }
+    }
+    io.emit('populate');
+
 }
 
 function readBoard(board) {
@@ -113,25 +126,23 @@ function readBoard(board) {
     }   
 }
 
+//delete??
 function hideRivalBoard() {
     for (property in new Matriz()) {
         io.emit('unknown', '#' + property);
     }
 }
 
-function Tile() {
-    this.class = "water";
-    this.revealed = false;
-}
 
 function Matriz() {
-    var matriz = {};
     var alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
     for (var x = 0; x < alphabet.length ; x++) {
         for (var y = 1; y < 11; y++) {
-            this[(alphabet[x] + y).toString()] = new Tile();
+            this[(alphabet[x] + y).toString()] = new Tile((alphabet[x] + y).toString());
         }
     }
+    console.log("matriz looks like: ");
+    console.log(this);
 }
 
 function Jugador() {

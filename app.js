@@ -9,15 +9,10 @@ app.use(serveStatic('public/'));
 var player1board;
 var player2board;
 
-var player1fichas;
-var player2fichas;
-
-var player1 = { id : null, ready:null};
-var player2 = { id : null, ready:null};
+var player1 = { id : null, ready:null, hits:0};
+var player2 = { id : null, ready:null, hits:0};
 
 var bothPlayers = {};
-
-var jugadores;
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
@@ -32,16 +27,16 @@ io.on('connection', function (socket) {
     socket.join('partido');
     console.log('user connected');
 
-    var jugadores = io.sockets.adapter.rooms['partido'].length;
-    console.log('jugadores ' + jugadores);
+    var cantJugadores = io.sockets.adapter.rooms['partido'].length;
+    console.log('cantJugadores ' + cantJugadores);
 
-    if (jugadores === 1) {
+    if (cantJugadores === 1) {
         socket.fichas = 0;
         player1.id = socket.id;
         gameOver();
     }
 
-    if (jugadores === 2) {
+    if (cantJugadores === 2) {
         socket.fichas = 0;
         player2.id = socket.id;
         prepareGame();
@@ -62,21 +57,28 @@ io.on('connection', function (socket) {
     socket.on('boat', function (id) {
         if (socket.fichas < 10) {
             socket.fichas++;
-            player1board[id] = {class:"boat", revealed:false};
+            bothPlayers[socket.id].board[id.substring(1)].tipo = "boat";
             socket.emit('boat', '#' + id);
-        } else {
-            console.log('p1: ' + player1.id);
-            console.log('p2: ' + player2.id);
-            bothPlayers[socket.id] = {ready:true};
-            if (checkBothPlayerStatus()) {
-                io.emit('endPrepare');
-            }
+            console.log('board BOAT on ' + id);
+        }
+        if (socket.fichas === 10) {
+            socket.emit('donePrep');
+            bothPlayers[socket.id].ready = true;
+            console.log('p1 ready: ' + bothPlayers[player1.id].ready + ' id: ' + player1.id);
+            console.log('p2 ready: ' + bothPlayers[player2.id].ready + ' id: ' + player2.id);
+        }
+        if (checkBothPlayerStatus()) {
+            startShooting();
         }
     });
 
     socket.on('shoot', function (id) {
         socket.broadcast.emit('shoot', id);
         console.log('dispararon a: ' + id);
+
+        console.log('le pegaron a ' + otherPlayerBoard(socket.id, id));
+
+        socket.emit(otherPlayerBoard(socket.id, id), '#'+ id);
 
     });
 
@@ -93,19 +95,17 @@ http.listen(3000, function () {
 });
 
 function checkBothPlayerStatus() {
-    for (var i = 0; i < bothPlayers.length; i++) {
-        if ( checkBothPlayerStatus[player1.id]) {
-            
-        }
-    }
-
-   if (typeof checkBothPlayerStatus[player1.id] === 'undefined' || typeof checkBothPlayerStatus[player1.id] === 'undefined') {
+    if (typeof bothPlayers[player1.id] === 'undefined' || typeof bothPlayers[player2.id] === 'undefined') {
         console.log('check both player status: one not ready');
         return false;
-   } else {
-    console.log('check both player status: both ready');
-   return checkBothPlayerStatus[player1.id].ready && checkBothPlayerStatus[player2.id].ready;
-   }
+    }
+    if (bothPlayers[player1.id].ready && bothPlayers[player2.id].ready) {
+        console.log('check both player status: both ready');
+        return true;
+    }
+    console.log('check both player status: one not ready');
+    return false;
+
 }
 
 function gameOver() {
@@ -113,10 +113,16 @@ function gameOver() {
 }
 
 function prepareGame() {
-    player1board = new Matriz;
-    player2board = new Matriz;
+    player1board = matriz();
     initBoard(player1board);
+    player1.board = player1board;
+
+    player2board = matriz();
     initBoard(player2board);
+    player2.board = player2board;
+
+    bothPlayers[player1.id] = player1;
+    bothPlayers[player2.id] = player2;
     io.emit('ready');
 }
 
@@ -127,32 +133,64 @@ function initBoard(board) {
     }   
 }
 
-function hideRivalBoard() {
-    for (property in new Matriz()) {
-        io.emit('unknown', '#' + property);
+function updateBoard(jugador) {
+    for (var tile in jugador.board) {
+        jugador.emit( )
     }
 }
 
-function Tile() {
-    this.class = "water";
-    this.revealed = false;
+function otherPlayerBoard(playerId, cellId) {
+    if (playerId === player1.id ) { return player2board[cellId].tipo }
+    if (playerId === player2.id ) { return player1board[cellId].tipo }
 }
 
-function Matriz() {
+function Tile(string) {
+    this.tipo = "water";
+    this.revealed = false;
+    this.id = string;
+}
+
+function matriz() {
     var matriz = {};
     var alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
     for (var x = 0; x < alphabet.length ; x++) {
         for (var y = 1; y < 11; y++) {
-            this[(alphabet[x] + y).toString()] = new Tile();
+            matriz[(alphabet[x] + y).toString()] = new Tile( (alphabet[x] + y).toString() );
         }
     }
+    return matriz;
 }
 
-function otherPlayer(socket) {
-    if (player1 === socket ) { return player2 }
-    if (player2 === socket ) { return player1 }
-    return null;
-}
+var startShooting = function () {
+    io.emit('endPrepare');
+    console.log('starting start shooting');
+
+    var alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+    for (var x = 0; x < alphabet.length ; x++) {
+        for (var y = 1; y < 11; y++) {
+            io.in('partido').emit('unknown', '#' + (alphabet[x] + y).toString() );
+        }
+    }
+
+    console.log('finish start shooting process');
+};
+
+
+
+
+
+
+/*
+
+ni idea, delete
+
+ function hideRivalBoard() {
+ for (property in new Matriz()) {
+ io.emit('unknown', '#' + property);
+ }
+ }
+
+
 
 function removeA(arr) {
     var what, a = arguments, L = a.length, ax;
@@ -164,3 +202,5 @@ function removeA(arr) {
     }
     return arr;
 }
+
+*/

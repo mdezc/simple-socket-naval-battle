@@ -14,5 +14,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "mdezc",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdezc/simple-socket-naval-battle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mdezc/simple-socket-naval-battle/issues"
+  },
+  "homepage": "https://github.com/mdezc/simple-socket-naval-battle#readme"
 }

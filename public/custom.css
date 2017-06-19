@@ -48,8 +48,18 @@ body {
     color: transparent;
 }
 
+.water-hit {
+    background: #2c4168;
+    color: transparent;
+}
+
 .boat {
-    background: orange;
+    background: #278942;
+    color: transparent;
+}
+
+.boat-hit {
+    background: #df3d2c;
     color: transparent;
 }
 

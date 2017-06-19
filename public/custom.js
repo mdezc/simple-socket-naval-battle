@@ -14,9 +14,10 @@ $(document).ready(function() {
         $(over).appendTo('body');
     }
 
+
     $('#jugador > table > tbody > tr > td ').click(function () {
         if (ponerFichas && esMiTurno) {
-            
+            $(this).removeClass('ownwater');
             socket.emit('boat', $(this).attr('id'));
             console.log("populando: " + $(this).attr('id'));
         }
@@ -37,11 +38,13 @@ $(document).ready(function() {
         socket.on('water', function(id) {
             $( id ).addClass('ownwater');
             $( id ).removeClass('default');
+            $( id ).removeClass('unknown');
         });
 
         socket.on('boat', function(id) {
             $( id ).addClass('boat');
             $( id ).removeClass('default');
+            $( id ).removeClass('unknown');
         });
 
         socket.on('default', function(id) {
@@ -56,6 +59,15 @@ $(document).ready(function() {
         socket.on('ready', function() {
             $('#esperando').hide();
             $('#partido').show();
+            ponerFichas = true;
+        });
+
+        socket.on('donePrep', function() {
+            ponerFichas = false;
+            console.log('donePrep over for me');
+            $('.ownwater').hover(function() {
+                $(this).css("cursor","default")
+            });
         });
 
         socket.on('over', function() {
@@ -65,12 +77,20 @@ $(document).ready(function() {
 
         socket.on('shoot', function(id) {
             console.log('me dispararon a: '+ id);
-            $( '#_' + id ).addClass('boat');
+            if ($( '#_' + id ).hasClass('boat')) {
+                $( '#_' + id ).removeClass('boat');
+                $( '#_' + id ).addClass('boat-hit');
+            }
+            if ($( '#_' + id ).hasClass('ownwater')) {
+                $( '#_' + id ).removeClass('ownwater');
+                $( '#_' + id ).addClass('water-hit');
+            }
             esMiTurno = true;
             $('#overlay').remove();
         });
 
         socket.on('endPrepare', function () {
+            console.log('endPrepare');
             ponerFichas = false;
         });
 

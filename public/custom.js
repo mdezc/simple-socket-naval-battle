@@ -75,6 +75,18 @@ $(document).ready(function() {
             $('#esperando').show();
         });
 
+        socket.on('winner', function() {
+            $('#partido').hide();
+            $('#winner').show();
+            $('#overlay').remove();
+        });
+
+        socket.on('loser', function() {
+            $('#partido').hide();
+            $('#loser').show();
+            $('#overlay').remove();
+        });
+
         socket.on('shoot', function(id) {
             console.log('me dispararon a: '+ id);
             if ($( '#_' + id ).hasClass('boat')) {

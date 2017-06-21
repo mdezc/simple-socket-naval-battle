@@ -78,7 +78,18 @@ io.on('connection', function (socket) {
 
         console.log('le pegaron a ' + otherPlayerBoard(socket.id, id));
 
+        if ('boat' === otherPlayerBoard(socket.id, id)) {
+            addToThisPlayerScore(socket.id);
+        }
+
         socket.emit(otherPlayerBoard(socket.id, id), '#'+ id);
+
+        if (haveAWinner()) {
+            // a este player que ganó
+            socket.emit('winner');
+            //al otro que perdió
+            socket.broadcast.emit('loser');
+        }
 
     });
 
@@ -112,6 +123,10 @@ function gameOver() {
     io.emit('over');
 }
 
+function haveAWinner() {
+    return player1.hits === 10 || player2.hits ===10;
+}
+
 function prepareGame() {
     player1board = matriz();
     initBoard(player1board);
@@ -133,15 +148,18 @@ function initBoard(board) {
     }   
 }
 
-function updateBoard(jugador) {
-    for (var tile in jugador.board) {
-        jugador.emit( )
-    }
-}
-
 function otherPlayerBoard(playerId, cellId) {
     if (playerId === player1.id ) { return player2board[cellId].tipo }
     if (playerId === player2.id ) { return player1board[cellId].tipo }
+}
+
+function addToThisPlayerScore(playerId) {
+    if (playerId === player1.id ) {
+        player1.hits ++;
+    }
+    if (playerId === player2.id ) {
+        player2.hits++;
+    }
 }
 
 function Tile(string) {
